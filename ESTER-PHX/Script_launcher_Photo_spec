@@ -1,0 +1,53 @@
+#!/bin/sh
+##############################################################################
+#SBATCH -N 1
+#SBATCH -pexclusive
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=160000
+#SBATCH -t 24:00:00
+##############################################################################
+
+#OMP_NUM_THREADS=18
+#export OMP_NUM_THREADS
+
+Om=( "0.51" ) ##("0" "0.1" "0.2" "0.3" "0.4" "0.5" "0.6" "0.7" "0.8" "0.9")
+incl=( "6" ) ##("0" "5" "10" "15" "20" "25" "30" "35" "40" "45" "50" "55" "60" "65" "70" "75" "80" "85" "90")
+M=( "$1" ) ##("1.9" "2" "2.1" "2.2" "2.3" "2.4" "2.5" "2.6" "2.7" "2.8" "2.9")
+Xc=("0.268")
+grid=("12050_Vega")
+
+#Poly_grid_paral_lbd_raies.out args:
+# 1 : lbd_start  = 1st lbd index
+# 2 : Nlbd       = Width of lbd intervall
+#	ex: Input spectrum with photo. step and PHX input files from 20 to 90000A
+#	    Output spectrum with photo. step from 100 to 88000A => $1 = 81 $2 = 87899 (+1 during process)     
+# 3 : Input file name
+# 4 : Output file name 
+
+for m in ${!M[@]};do
+    for o in ${!Om[@]};do
+       for i in ${!incl[@]};do
+	   for xc in ${!Xc[@]};do
+               for g in ${!grid[@]};do                                                                            
+                   echo "M    = ${M[$m]}"
+                   echo "Om   = ${Om[$o]}"
+                   echo "i    = ${incl[$i]}"
+                   echo "Xc   = ${Xc[$xc]}"
+		   echo "grid = ${grid[$g]}"
+                   echo "Photo_Pol_leg_${M[$m]}MOm${Om[$o]}i${incl[$i]}_${grid[$g]}.h5"
+                   sleep 2s
+		   if [ ! -f Spec_${M[$m]}MOm${Om[$o]}i${incl[$i]}_Xc${Xc[$xc]}_${grid[$g]}.h5 ]
+		   then
+srun -N 1 -c 18 --mem 160000  ./Build_PHX_ESTER_spec.out  80 87998 Photo_Pol_leg_${M[$m]}MOm${Om[$o]}i${incl[$i]}_Xc${Xc[$xc]}_${grid[$g]}.h5    Spec_${M[$m]}MOm${Om[$o]}i${incl[$i]}_Xc${Xc[$xc]}_${grid[$g]}.h5  > output.out 
+                                                  #start_lbd, Nlbd, Input file, Output
+#srun -N 1 -c 18 --mem 160000  ./Build_PHX_ESTER_spec.out  10 39990 Line4481.0_Pol_leg_${M[$m]}MOm${Om[$o]}i${incl[$i]}_${grid[$g]}.h5    Line4481.0_Spec_${M[$m]}MOm${Om[$o]}i${incl[$i]}_${grid[$g]}_continuum.h5  > output_conti.out 
+		   else
+			echo "${M[$m]}MOm${Om[$o]}i${incl[$i]} has already done "
+		   fi
+wait
+done
+done
+done
+done
+done
